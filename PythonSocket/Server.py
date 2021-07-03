@@ -1,4 +1,5 @@
 import socket
+import threading
 import time
 
 def send_text(socket, text):
@@ -45,6 +46,8 @@ print("connected")
 # send_text(connection_socket, message2)
 #
 # print('sent message')
+t = threading.Thread(target = get_text(connection_socket))
+t.start()
 time.sleep(10)
 message = 'Hello!'
 connection_socket.send(message.encode())

@@ -4,7 +4,11 @@ import threading
 def send_text(socket, text):
     text = text + '\n'
     data = text.encode()
-    socket.send(data)
+    try :
+        socket.send(data)
+    except :
+        socket.close()
+        print('error occurred while sending')
 
 
 def get_text(receiving_socket):
@@ -12,8 +16,11 @@ def get_text(receiving_socket):
 
     socket_open = True
     while socket_open:
-        data = receiving_socket.recv(1024) # Receive data
-
+        try :
+            data = receiving_socket.recv(1024) # Receive data
+        except :
+            receiving_socket.close()
+            print('Error occurred while receiving')
         if not data:
             socket_open = False # Repeat until there is no more data
 
@@ -23,7 +30,7 @@ def get_text(receiving_socket):
         while terminator_pos > -1: # if there is special 'mark' exists
             message = buffer[:terminator_pos] # Move string until the mark to message
             buffer = buffer[terminator_pos + 1:]
-            yield message
+            print(message)
             terminator_pos = buffer.find('\n')
 
 
@@ -32,7 +39,7 @@ while True:
     if init_choice == '1':
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # IP 0,0,0,0 indiates that the server is going to answer to any ip addresses. 8081 is a port number
-        server_socket.bind(("0.0.0.0", 8081))
+        server_socket.bind(("0.0.0.0", 8080))
         server_socket.listen()
         print("A server socket is created, waiting for a connection")
         connection_socket, address = server_socket.accept()
@@ -42,24 +49,29 @@ while True:
     elif init_choice == '2':
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_ip = input('Type server ip address')
-        client_socket.connect((server_ip, 8081))
+        client_socket.connect((server_ip, 8080))
         print("connected")
         break
     else:
         print('Entered wrong choice')
 
 if init_choice == '1':
-    t = threading.Thread(target = get_text(connection_socket))
+    t = threading.Thread(target = get_text, args = (connection_socket,))
 else :
-    t = threading.Thread(target = get_text(client_socket))
+    t = threading.Thread(target = get_text, args = (client_socket,))
+t.daemon = True
 t.start()
+print('Thread started')
 
 while True :
     message = input('type the message you want to send (type exit to quit)')
     if message == 'exit':
         break
     else :
-        send_text(client_socket, message)
+        if init_choice == '1':
+            send_text(connection_socket, message)
+        else :
+            send_text(client_socket, message)
 
 if init_choice == '1':
     try :

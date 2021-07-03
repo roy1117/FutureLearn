@@ -1,57 +1,20 @@
-a = ''
-if not a:
-    print('yes')
-else:
-    print('No')
-
-a = None
-if not a:
-    print('yes')
-else:
-    print('No')
-
-a = 0
-if not a:
-    print('yes')
-else:
-    print('No')
-
-a = False
-if not a:
-    print('yes')
-else:
-    print('No')
-
-print(False == 0)
-print(not '')
-print(not None)
+from threading import *
+import time
 
 
-def yield_test(message):
-    for i in message:
-        yield i
+# creating a function
+def thread_1(message):
+    while True :
+        print(message)
+        time.sleep(2)
 
 
-a = 'Hello, world!'
-# iterate generator function
-for i in yield_test(a):
-    print(i)
+# creating a thread T
+T = Thread(target=thread_1, args = ('Hi',))
+T.daemon = True
+# starting of thread T
+T.start()
 
-
-# another way to iterate generator function but not efficient
-b = iter(yield_test(a))
-print(next(yield_test(b)))
-print(next(yield_test(b)))
-print(next(yield_test(b)))# iterate generator function
-print(next(yield_test(b)))
-print(next(yield_test(b)))
-
-
-b = iter('Hi! Mike')
-print(next(yield_test(b)))
-print(next(yield_test(b)))
-print(next(yield_test(b)))
-print(next(yield_test(b)))
-print(next(yield_test(b)))
-
-
+# main thread stop execution till 5 sec.
+time.sleep(5)
+print('main Thread execution')

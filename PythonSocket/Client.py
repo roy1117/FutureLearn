@@ -26,7 +26,6 @@ def get_text(receiving_socket):
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.connect(("127.0.0.1", 8081))
-client_socket.settimeout(5)
 print("connected")
 
 # for recv_text in get_text(client_socket):
