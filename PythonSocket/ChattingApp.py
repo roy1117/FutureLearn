@@ -1,5 +1,5 @@
 import socket
-
+import threading
 
 def send_text(socket, text):
     text = text + '\n'
@@ -37,31 +37,41 @@ while True:
         print("A server socket is created, waiting for a connection")
         connection_socket, address = server_socket.accept()
         print("connected")
-        continue
+        print(address)
+        break
     elif init_choice == '2':
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_ip = input('Type server ip address')
         client_socket.connect((server_ip, 8081))
         print("connected")
-        continue
+        break
     else:
         print('Entered wrong choice')
 
-if init_choice == '1' :
-    for message in get_text(connection_socket):
-        print(message)
+if init_choice == '1':
+    t = threading.Thread(target = get_text(connection_socket))
 else :
-    while True :
-        message = input('type the message you want to send (type exit to quit)')
-        if message == 'exit':
-            continue
-        else :
-            send_text(client_socket, message)
+    t = threading.Thread(target = get_text(client_socket))
+t.start()
 
-try :
-    server_socket.close()
-    connection_socket.close()
-    client_socket.close()
-except :
-    print('Finished abrupptly')
+while True :
+    message = input('type the message you want to send (type exit to quit)')
+    if message == 'exit':
+        break
+    else :
+        send_text(client_socket, message)
+
+if init_choice == '1':
+    try :
+        server_socket.close()
+        connection_socket.close()
+        print('sockets all closed')
+    except :
+        print('Finished abrupptly')
+elif init_choice == '2':
+    try :
+        client_socket.close()
+        print('sockets all closed')
+    except :
+        print('Finished abrupptly')
 
