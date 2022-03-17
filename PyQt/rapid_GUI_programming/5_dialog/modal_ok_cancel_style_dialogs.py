@@ -1,5 +1,7 @@
 from PyQt5.QtWidgets import *
 import sys
+from PyQt5.Qt import *
+
 Punctuation = [',', '.', '!', '?', '-', '_']
 
 class MainWindow(QMainWindow):
@@ -12,25 +14,34 @@ class MainWindow(QMainWindow):
         self.cetralwidet = QWidget()
         self.setCentralWidget(self.cetralwidet)
         self.numberLabel = QLabel("12345676")
-        self.setFormatButton = QPushButton()
-        self.setFormatButton.setText("Settings")
-        self.setFormatButton.clicked.connect(self.setNumberFormat1)
+
+        self.setFormatButton1 = QPushButton()
+        self.setFormatButton1.setText("Setting1")
+        self.setFormatButton1.clicked.connect(self.setNumberFormat1)
+
+        self.setFormatButton2 = QPushButton()
+        self.setFormatButton2.setText("Setting2")
+        self.setFormatButton2.clicked.connect(self.setNumberFormat2)
+
         gridlayout = QGridLayout()
         gridlayout.addWidget(self.numberLabel, 0, 0)
-        gridlayout.addWidget(self.setFormatButton, 0, 1)
+        gridlayout.addWidget(self.setFormatButton1, 0, 1)
+        gridlayout.addWidget(self.setFormatButton2, 0, 2)
         self.cetralwidet.setLayout(gridlayout)
 
+    def setNumberFormat2(self):
+        dialog2 = NumberFormatDlg2(self.format, self)
+        dialog2.show()
 
     def setNumberFormat1(self):
-        dialog = NumberFormatDlg(self.format, self)
-        # dialog has accept() and reject() method
+        dialog1 = NumberFormatDlg(self.format, self)
+        # dialog1 has accept() and reject() method
         # accept() terminates event loop with return value true
         # reject() terminates event loop with return value false
         # both methods emit accepted rejected signal respectively for users to connect custom slots
-        if dialog.exec_():
-            self.format = dialog.numberFormat()
+        if dialog1.exec_():
+            self.format = dialog1.numberFormat()
             print(self.format)
-
 
 class NumberFormatDlg(QDialog):
     def __init__(self, format, parent=None):
@@ -106,6 +117,53 @@ class NumberFormatDlg(QDialog):
             self.thousandsEdit.setFocus()
         except Exception as e:
             print(e)
+
+class NumberFormatDlg2(QDialog):
+    def __init__(self, format, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WA_DeleteOnClose)
+        punctuationRe = QRegExp(r"[[,;:\n.]")
+        thousandsLabel = QLabel("&Thousands separator")
+        self.thousandsEdit = QLineEdit(format["thousandsseparator"])
+        thousandsLabel.setBuddy(self.thousandsEdit)
+        self.thousandsEdit.setMaxLength(1)
+        self.thousandsEdit.setValidator(
+            QRegExpValidator(punctuationRe, self))
+        decimalMarkerLabel = QLabel("Decimal &marker")
+        self.decimalMarkerEdit = QLineEdit(format["decimalmarker"])
+        decimalMarkerLabel.setBuddy(self.decimalMarkerEdit)
+        self.decimalMarkerEdit.setMaxLength(1)
+        self.decimalMarkerEdit.setValidator(
+            QRegExpValidator(punctuationRe, self))
+        self.decimalMarkerEdit.setInputMask("X")
+        decimalPlacesLabel = QLabel("&Decimal places")
+        self.decimalPlacesSpinBox = QSpinBox()
+        decimalPlacesLabel.setBuddy(self.decimalPlacesSpinBox)
+        self.decimalPlacesSpinBox.setRange(0, 6)
+        self.decimalPlacesSpinBox.setValue(format["decimalplaces"])
+        self.redNegativesCheckBox = QCheckBox("&Red negative numbers")
+        self.redNegativesCheckBox.setChecked(format["rednegatives"])
+        buttonBox = QDialogButtonBox(QDialogButtonBox.Apply |
+                                     QDialogButtonBox.Close)
+        self.format = format
+        applyButton = buttonBox.button(QDialogButtonBox.Apply)
+        applyButton.clicked.connect(self.apply)
+        self.setWindowTitle("Set Number Format (Modeless)")
+
+        # set layout
+        gridlayout = QGridLayout()
+        gridlayout.addWidget(thousandsLabel, 0, 0)
+        gridlayout.addWidget(self.thousandsEdit, 0, 1)
+        gridlayout.addWidget(decimalMarkerLabel, 1, 0)
+        gridlayout.addWidget(self.decimalMarkerEdit, 1, 1)
+        gridlayout.addWidget(decimalPlacesLabel, 2, 0)
+        gridlayout.addWidget(self.decimalPlacesSpinBox, 2, 1)
+        gridlayout.addWidget(self.redNegativesCheckBox, 3, 0, 1, 2)
+        gridlayout.addWidget(buttonBox, 4, 0, 1, 2)
+        self.setLayout(gridlayout)
+
+    def apply(self):
+        print('hi')
 
 app = QApplication(sys.argv)
 main_window = MainWindow()
