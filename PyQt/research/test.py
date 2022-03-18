@@ -1,2 +1,8 @@
-dict = {'tempsensor' : 1234}
-print('tempsensor1' in dict)
+class A:
+    counter = 99
+
+    def __init__(self):
+        print(self.counter)
+
+a = A()
+print(A.counter)
