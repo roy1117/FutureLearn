@@ -43,6 +43,25 @@ class MainWindow(QMainWindow):
         status.addPermanentWidget(self.sizeLabel)
         status.showMessage("Ready", 5000)
 
+        fileNewAction = QAction(QIcon("images/filenew.PNG"), "&New", self)
+        fileNewAction.setShortcut(QKeySequence.New)
+        helpText = "Create a new image"
+        fileNewAction.setToolTip(helpText)
+        fileNewAction.setStatusTip(helpText)
+        fileNewAction.triggered.connect(self.fileNew)
+
+
+        fileMenu = QMenuBar()
+        fileMenu.addAction(fileNewAction)
+        self.setMenuBar(fileMenu)
+
+        toolbar = QToolBar()
+        toolbar.addAction(fileNewAction)
+        self.addToolBar(Qt.TopToolBarArea, toolbar)
+
+    def fileNew(self):
+        print('Hi')
+
 class Form(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
