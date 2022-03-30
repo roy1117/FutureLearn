@@ -21,6 +21,6 @@
 # pos = a.find('\n')
 # print(pos)
 
-a = 'test'
+a = 'research'
 b = a.replace('t','d', 1)
 print(b)

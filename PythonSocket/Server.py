@@ -37,7 +37,7 @@ print("waiting for a connection")
 connection_socket, address = server_socket.accept()
 print("connected")
 
-# A sequence of test
+# A sequence of research
 
 # 1. Send message
 # message1 = "Hello, Thanks for visiting1"
