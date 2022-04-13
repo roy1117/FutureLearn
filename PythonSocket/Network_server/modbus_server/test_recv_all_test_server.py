@@ -7,3 +7,5 @@ connection_socket, _ = server.accept()
 print('connected')
 message = connection_socket.recv(81, socket.MSG_WAITALL)
 print(message.decode())
+
+
