@@ -10,15 +10,16 @@ class Form(QMainWindow):
     def __init__(self):
         super().__init__()
         self.prev_data = [0] * 40
+        self.number = 0
         self.connectionForm = ConnectionForm()
         self.address = None
         self.port = None
-        self.make_connection()
+        self.open_server()
 
         self.tableWidget = QTableWidget()
         self.tableWidget.setRowCount(10)
         self.tableWidget.setColumnCount(4)
-        self.tableWidget.itemChanged.connect(self.print_changed_item)
+        self.tableWidget.itemChanged.connect(self.edit_value)
 
         self.testLabel = QLabel('Hello')
 
@@ -34,31 +35,39 @@ class Form(QMainWindow):
         helpText = "Connection Setting"
         fileNewAction.setToolTip(helpText)
         fileNewAction.setStatusTip(helpText)
-        fileNewAction.triggered.connect(self.make_connection)
+        fileNewAction.triggered.connect(self.open_server)
 
         fileMenu = QMenuBar()
         fileMenu.addAction(fileNewAction)
         self.setMenuBar(fileMenu)
 
-        # data_update_thread = Thread(target=self.check_data_bank_changed)
-        # data_update_thread.daemon = True
-        # data_update_thread.start()
-        self.number = 0
-        self.check_data_bank_changed()
+        data_update_thread = Thread(target=self.check_data_bank_changed)
+        data_update_thread.daemon = True
+        data_update_thread.start()
 
-    def make_connection(self):
+
+    def open_server(self):
         if self.connectionForm.exec_():
             try:
                 self.address, self.port = self.connectionForm.get_connection_info()
                 self.server = ModbusServer(self.address, self.port, no_block=True)
                 self.server.start()
                 self.setWindowTitle('modbus slave, ip address : {0}, port : {1}'.format(self.address, self.port))
+                self.set_default_value()
             except Exception as e:
                 print(e)
                 QMessageBox.warning(self, 'Connection error', 'cannot make a connection!')
-                self.make_connection()
+                self.open_server()
 
-    def print_changed_item(self, item):
+    def set_default_value(self):
+        self.prev_data = DataBank.get_words(0, 40)
+        for i in range(40):
+            row = i % 10
+            col = int(i / 10)
+            self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prev_data[i])))
+            self.tableWidget.update()
+
+    def edit_value(self, item):
         row = item.row()
         col = item.column()
         address = col * 10 + row
@@ -78,23 +87,15 @@ class Form(QMainWindow):
         DataBank.set_words(address, [val])
 
     def check_data_bank_changed(self):
-
-        # new_data = DataBank.get_words(0, 40)
-        # for i in range(40):
-        #     if self.prev_data[i] != new_data[i]:
-        #         row = i % 10
-        #         col = int(i / 10)
-        #         self.tableWidget.setItem(row, col, QTableWidgetItem(str(new_data[i])))
-        #         self.tableWidget.update()
-        #         self.prev_data[i] = new_data[i]
-        self.number = self.number + 1
-        self.tableWidget.setItem(1, 1, QTableWidgetItem(str(self.number)))
-        self.tableWidget.resize(self.tableWidget.width(), self.tableWidget.height())
-        self.testLabel.setText(str(self.number))
-        self.timer = QTimer()
-        self.timer.setInterval(1)
-        self.timer.timeout.connect(self.check_data_bank_changed)
-
+        new_data = DataBank.get_words(0, 40)
+        for i in range(40):
+            if self.prev_data[i] != new_data[i]:
+                row = i % 10
+                col = int(i / 10)
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(new_data[i])))
+                self.tableWidget.update()
+                self.prev_data[i] = new_data[i]
+        time.sleep(0.5)
 
 class ConnectionForm(QDialog):
     def __init__(self):
