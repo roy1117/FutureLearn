@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import sys
-from threading import Thread
+from threading import Thread, Timer
 from pyModbusTCP.server import ModbusServer, DataBank
 import time
 
@@ -16,12 +16,13 @@ class Form(QMainWindow):
         self.slaveDefinitionForm = SlaveDefinitionForm()
         self.ipAddress = None
         self.port = None
-
+        self.data_update_thread = None
+        self.thread_run = False
 
         self.tableWidget = QTableWidget()
         self.tableWidget.setRowCount(10)
         self.tableWidget.setColumnCount(4)
-        self.tableWidget.itemChanged.connect(self.edit_value)
+
 
         centralWidget = QWidget()
         self.setCentralWidget(centralWidget)
@@ -48,15 +49,23 @@ class Form(QMainWindow):
         self.setMenuBar(fileMenu)
 
         self.open_server()
+        self.slave_definition_setup()
 
+        self.tableWidget.itemChanged.connect(self.edit_value)
+
+    def thread_running(self):
+        if self.thread_run:
+            self.check_data_bank_changed()
+            self.data_update_thread = Timer(0.5, self.thread_running).start()
 
     def start_thread(self):
-        self.data_update_thread = Thread(target=self.check_data_bank_changed)
-        self.data_update_thread.daemon = True
-        self.data_update_thread.start()
+        self.thread_run = True
+        self.thread_running()
 
     def close_thread(self):
-        self.data_update_thread.stop()
+        self.thread_run = False
+        if self.data_update_thread is not None:
+            self.data_update_thread.cancel()
 
     def open_server(self):
         if self.connectionForm.exec_():
@@ -75,7 +84,7 @@ class Form(QMainWindow):
     def slave_definition_setup(self):
         if self.slaveDefinitionForm.exec_():
             try:
-                self.address, self.quantity = self.connectionForm.get_connection_info()
+                self.address, self.quantity = self.slaveDefinitionForm.get_slave_definition_info()
                 self.close_thread()
                 self.set_default_value()
                 self.start_thread()
@@ -83,19 +92,26 @@ class Form(QMainWindow):
                 print(e)
                 QMessageBox.warning(self, 'Value error', 'cannot apply the setting!')
 
-
     def set_default_value(self):
         self.prev_data = DataBank.get_words(self.address, self.quantity)
-        for i in range(self.quantity):
+        columnCount = int(len(self.prev_data)/10+1)
+        self.tableWidget.setColumnCount(columnCount)
+        for i in range(columnCount * 10):
             row = i % 10
             col = int(i / 10)
-            self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prev_data[i])))
-            self.tableWidget.viewport().update()
+            if i < len(self.prev_data):
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prev_data[i])))
+            else:
+                self.tableWidget.setItem(row, col, QTableWidgetItem(''))
+        self.tableWidget.viewport().update()
 
     def edit_value(self, item):
         row = item.row()
         col = item.column()
         address = col * 10 + row
+        if address > self.quantity:
+            self.tableWidget.setItem(row, col, QTableWidgetItem(''))
+            return
         pre_val = DataBank.get_words(address)[0]
         if item.text() == str(pre_val):
             return
@@ -112,16 +128,14 @@ class Form(QMainWindow):
         DataBank.set_words(address, [val])
 
     def check_data_bank_changed(self):
-        while True:
-            new_data = DataBank.get_words(0, self.quantity)
-            for i in range(self.quantity):
-                if self.prev_data[i] != new_data[i]:
-                    row = i % 10
-                    col = int(i / 10)
-                    self.tableWidget.setItem(row, col, QTableWidgetItem(str(new_data[i])))
-                    self.tableWidget.viewport().update()
-                    self.prev_data[i] = new_data[i]
-            time.sleep(0.5)
+        new_data = DataBank.get_words(0, self.quantity)
+        for i in range(self.quantity):
+            if self.prev_data[i] != new_data[i]:
+                row = i % 10
+                col = int(i / 10)
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(new_data[i])))
+                self.prev_data[i] = new_data[i]
+        self.tableWidget.viewport().update()
 
 
 class ConnectionForm(QDialog):
