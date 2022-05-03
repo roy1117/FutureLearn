@@ -9,21 +9,26 @@ import time
 class Form(QMainWindow):
     def __init__(self):
         super().__init__()
+        # Define variables in advance
+        # Some of them have default value
         self.address = 0
         self.quantity = 10
-        self.prev_data = None
+        self.prevData = None
         self.connectionForm = ConnectionForm()
         self.slaveDefinitionForm = SlaveDefinitionForm()
-        self.ipAddress = None
-        self.port = None
-        self.data_update_thread = None
-        self.thread_run = False
+        self.ipAddress = '127.0.0.1'
+        self.port = 502
+        self.updateModbusDataThread = None
+        self.isThreadRunning = False
+        self.columnOffset = None
+        self.index = None
 
+        # Define a table widget
         self.tableWidget = QTableWidget()
         self.tableWidget.setRowCount(10)
-        self.tableWidget.setColumnCount(4)
+        self.tableWidget.setColumnCount(1)
 
-
+        # Do layout work
         centralWidget = QWidget()
         self.setCentralWidget(centralWidget)
 
@@ -31,57 +36,38 @@ class Form(QMainWindow):
         layout.addWidget(self.tableWidget, 0, 0)
         centralWidget.setLayout(layout)
 
+        # Define menu and connect proper methods
         connectionAction = QAction("&Connection", self)
         helpText = "Connection Setting"
         connectionAction.setToolTip(helpText)
         connectionAction.setStatusTip(helpText)
-        connectionAction.triggered.connect(self.open_server)
+        connectionAction.triggered.connect(self.ask_server_definition)
 
         setupAction = QAction("&Setup", self)
         helpText = "Slave Definition"
         setupAction.setToolTip(helpText)
         setupAction.setStatusTip(helpText)
-        setupAction.triggered.connect(self.slave_definition_setup)
+        setupAction.triggered.connect(self.ask_slave_definition)
 
         fileMenu = QMenuBar()
         fileMenu.addAction(connectionAction)
         fileMenu.addAction(setupAction)
         self.setMenuBar(fileMenu)
 
-        self.open_server()
-        self.slave_definition_setup()
+        self.ask_server_definition()
+        self.ask_slave_definition()
 
-        self.tableWidget.itemChanged.connect(self.edit_value)
+        self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
 
-    def thread_running(self):
-        if self.thread_run:
-            self.check_data_bank_changed()
-            self.data_update_thread = Timer(0.5, self.thread_running).start()
-
-    def start_thread(self):
-        self.thread_run = True
-        self.thread_running()
-
-    def close_thread(self):
-        self.thread_run = False
-        if self.data_update_thread is not None:
-            self.data_update_thread.cancel()
-
-    def open_server(self):
+    def ask_server_definition(self):
         if self.connectionForm.exec_():
             try:
                 self.ipAddress, self.port = self.connectionForm.get_connection_info()
-                self.server = ModbusServer(self.ipAddress, self.port, no_block=True)
-                self.server.start()
-                self.setWindowTitle('Modbus Slave, ip address : {0}, port : {1}'.format(self.ipAddress, self.port))
             except Exception as e:
                 print(e)
-                QMessageBox.warning(self, 'Connection error', 'cannot make a connection!')
-                self.open_server()
-            print('server opened successfully')
-        self.set_default_value()
+        self._open_server()
 
-    def slave_definition_setup(self):
+    def ask_slave_definition(self):
         if self.slaveDefinitionForm.exec_():
             try:
                 self.address, self.quantity = self.slaveDefinitionForm.get_slave_definition_info()
@@ -92,25 +78,58 @@ class Form(QMainWindow):
                 print(e)
                 QMessageBox.warning(self, 'Value error', 'cannot apply the setting!')
 
+    def _open_server(self):
+        try:
+            self.server = ModbusServer(self.ipAddress, self.port, no_block=True)
+            self.server.start()
+            self.setWindowTitle('Modbus Slave, ip address : {0}, port : {1}'.format(self.ipAddress, self.port))
+        except Exception as e:
+            print(e)
+            QMessageBox.warning(self, 'Connection error', 'cannot make a connection!')
+            self.ask_server_definition()
+        print('server opened successfully')
+        # self.set_default_value()
+
+    def thread_main(self):
+        if self.isThreadRunning:
+            self._handler_data_bank_changed()
+            self.updateModbusDataThread = Timer(0.5, self.thread_main).start()
+
+    def start_thread(self):
+        self.isThreadRunning = True
+        self.thread_main()
+
+    def close_thread(self):
+        self.isThreadRunning = False
+        if self.updateModbusDataThread is not None:
+            self.updateModbusDataThread.cancel()
+
     def set_default_value(self):
-        self.prev_data = DataBank.get_words(self.address, self.quantity)
-        columnCount = int(len(self.prev_data)/10+1)
+        self.prevData = DataBank.get_words(self.address, self.quantity)
+        columnCount = int(len(self.prevData)/10+1)
+        self.columnOffset = int(self.address/10)
+        self.index = self.address - self.columnOffset * 10
         self.tableWidget.setColumnCount(columnCount)
+        for i in range(columnCount):
+            self.tableWidget.setHorizontalHeaderItem(i, QTableWidgetItem(str(i+self.columnOffset)))
+        for i in range(10):
+            self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(str(i)))
         for i in range(columnCount * 10):
             row = i % 10
             col = int(i / 10)
-            if i < len(self.prev_data):
-                self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prev_data[i])))
+            if i >= len(self.prevData)+self.index or i < self.index:
+                item = QTableWidgetItem()
+                item.setFlags(Qt.ItemFlag.NoItemFlags)
+                self.tableWidget.setItem(row, col, item)
             else:
-                self.tableWidget.setItem(row, col, QTableWidgetItem(''))
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prevData[i-self.index])))
         self.tableWidget.viewport().update()
 
-    def edit_value(self, item):
+    def _handler_cell_value_changed(self, item):
         row = item.row()
         col = item.column()
         address = col * 10 + row
-        if address > self.quantity:
-            self.tableWidget.setItem(row, col, QTableWidgetItem(''))
+        if address >= self.quantity + self.index:
             return
         pre_val = DataBank.get_words(address)[0]
         if item.text() == str(pre_val):
@@ -118,23 +137,21 @@ class Form(QMainWindow):
         else:
             try:
                 val = int(item.text())
-                self.set_modbus_value(address, val)
+                DataBank.set_words(self.columnOffset*10 + address, [val])
             except Exception as e:
-                # QMessageBox.warning(self, 'Warning', 'Only integer is acceptable')
+                QMessageBox.warning(self, 'Warning', 'Only integer is acceptable')
                 self.tableWidget.setItem(row, col, QTableWidgetItem(str(pre_val)))
                 print(e)
 
-    def set_modbus_value(self, address, val):
-        DataBank.set_words(address, [val])
-
-    def check_data_bank_changed(self):
-        new_data = DataBank.get_words(0, self.quantity)
+    def _handler_data_bank_changed(self):
+        newData = DataBank.get_words(self.address, self.quantity)
         for i in range(self.quantity):
-            if self.prev_data[i] != new_data[i]:
-                row = i % 10
-                col = int(i / 10)
-                self.tableWidget.setItem(row, col, QTableWidgetItem(str(new_data[i])))
-                self.prev_data[i] = new_data[i]
+            if self.prevData[i] != newData[i]:
+                index = i + self.address - self.columnOffset * 10
+                row = index % 10
+                col = int(index / 10)
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(newData[i])))
+                self.prevData[i] = newData[i]
         self.tableWidget.viewport().update()
 
 
