@@ -21,7 +21,7 @@ class Form(QMainWindow):
         self.updateModbusDataThread = None
         self.isThreadRunning = False
         self.columnOffset = None
-        self.index = None
+        self.rowOffset = None
 
         # Define a table widget
         self.tableWidget = QTableWidget()
@@ -54,10 +54,11 @@ class Form(QMainWindow):
         fileMenu.addAction(setupAction)
         self.setMenuBar(fileMenu)
 
+        self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
         self.ask_server_definition()
         self.ask_slave_definition()
 
-        self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
+
 
     def ask_server_definition(self):
         if self.connectionForm.exec_():
@@ -105,10 +106,11 @@ class Form(QMainWindow):
             self.updateModbusDataThread.cancel()
 
     def set_default_value(self):
+        self.tableWidget.itemChanged.disconnect(self._handler_cell_value_changed)
         self.prevData = DataBank.get_words(self.address, self.quantity)
         columnCount = int(len(self.prevData)/10+1)
         self.columnOffset = int(self.address/10)
-        self.index = self.address - self.columnOffset * 10
+        self.rowOffset = self.address - self.columnOffset * 10
         self.tableWidget.setColumnCount(columnCount)
         for i in range(columnCount):
             self.tableWidget.setHorizontalHeaderItem(i, QTableWidgetItem(str(i+self.columnOffset)))
@@ -117,27 +119,28 @@ class Form(QMainWindow):
         for i in range(columnCount * 10):
             row = i % 10
             col = int(i / 10)
-            if i >= len(self.prevData)+self.index or i < self.index:
+            if i >= len(self.prevData) + self.rowOffset or i < self.rowOffset:
                 item = QTableWidgetItem()
                 item.setFlags(Qt.ItemFlag.NoItemFlags)
                 self.tableWidget.setItem(row, col, item)
             else:
-                self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prevData[i-self.index])))
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prevData[i-self.rowOffset])))
         self.tableWidget.viewport().update()
+        self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
 
     def _handler_cell_value_changed(self, item):
         row = item.row()
         col = item.column()
-        address = col * 10 + row
-        if address >= self.quantity + self.index:
+        index = col * 10 + row
+        if index >= self.quantity + self.rowOffset:
             return
-        pre_val = DataBank.get_words(address)[0]
+        pre_val = DataBank.get_words(index)[0]
         if item.text() == str(pre_val):
             return
         else:
             try:
                 val = int(item.text())
-                DataBank.set_words(self.columnOffset*10 + address, [val])
+                DataBank.set_words(self.columnOffset*10 + index, [val])
             except Exception as e:
                 QMessageBox.warning(self, 'Warning', 'Only integer is acceptable')
                 self.tableWidget.setItem(row, col, QTableWidgetItem(str(pre_val)))
