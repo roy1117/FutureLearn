@@ -4,6 +4,8 @@ from PyQt5.QtGui import *
 import sys
 from threading import Thread, Timer
 from pyModbusTCP.server import ModbusServer, DataBank
+from modbus.modbus_server.utilites import *
+
 import time
 
 class Form(QMainWindow):
@@ -39,20 +41,19 @@ class Form(QMainWindow):
 
         # Define menu and connect proper methods
         connectionAction = QAction("&Connection", self)
-        helpText = "Connection Setting"
-        connectionAction.setToolTip(helpText)
+        connectionAction.setIcon(QIcon("images/connection.png"))
+        helpText = "Connection setting"
         connectionAction.setStatusTip(helpText)
         connectionAction.triggered.connect(self.ask_server_definition)
 
         disconnectionAction = QAction("&Disconnection", self)
-        helpText = "Disconnection"
-        disconnectionAction.setToolTip(helpText)
+        disconnectionAction.setIcon(QIcon("images/disconnection.png"))
+        helpText = "Disconnect communication"
         disconnectionAction.setStatusTip(helpText)
         disconnectionAction.triggered.connect(self._close_server)
 
         setupAction = QAction("&Setup", self)
-        helpText = "Slave Definition"
-        setupAction.setToolTip(helpText)
+        helpText = "Setup slave definition"
         setupAction.setStatusTip(helpText)
         setupAction.triggered.connect(self.ask_slave_definition)
 
@@ -60,22 +61,33 @@ class Form(QMainWindow):
         connectionMenu.addAction(connectionAction)
         connectionMenu.addAction(disconnectionAction)
 
-
         menuBar = QMenuBar()
         menuBar.addAction(setupAction)
         menuBar.addMenu(connectionMenu)
         self.setMenuBar(menuBar)
 
+        self.sizeLabel = QLabel("{0}, {1}".format(self.width(), self.height()))
+        self.sizeLabel.setFrameStyle(QFrame.StyledPanel | QFrame.Sunken)
+
+        self.statusBar = QStatusBar()
+        self.setStatusBar(self.statusBar)
+        self.statusBar.showMessage("Ready", 5000)
+        self.statusBar.addPermanentWidget(self.sizeLabel)
+
         self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
         self.ask_server_definition()
         self.ask_slave_definition()
+
+    def resizeEvent(self, event):
+        self.sizeLabel.setText("{0}, {1}".format(event.size().width(), event.size().height()))
 
     def _close_server(self):
         try:
             if self.server is not None:
                 if self.server.is_run:
                     self.server.stop()
-                    print('server disconnected successfully')
+                    self.statusBar.showMessage("Server disconnected successfully", 5000)
+                    print('Server disconnected successfully')
         except Exception as e:
             print(e)
             QMessageBox.warning(self, 'Disconnection error', 'disconnection failed!')
@@ -104,13 +116,13 @@ class Form(QMainWindow):
             if self.server is None:
                 self.server = ModbusServer(self.ipAddress, self.port, no_block=True)
             self.server.start()
-            self.setWindowTitle('Modbus Slave, ip address : {0}, port : {1}'.format(self.ipAddress, self.port))
+            self.setWindowTitle('Modbus Slave, Ip Address : {0}, Port : {1}'.format(self.ipAddress, self.port))
         except Exception as e:
             print(e)
             QMessageBox.warning(self, 'Connection error', 'cannot make a connection!')
             self.ask_server_definition()
+        self.statusBar.showMessage("Server opened successfully", 5000)
         print('server opened successfully')
-        # self.set_default_value()
 
     def thread_main(self):
         if self.isThreadRunning:
@@ -148,6 +160,7 @@ class Form(QMainWindow):
                 self.tableWidget.setItem(row, col, QTableWidgetItem(str(self.prevData[i-self.rowOffset])))
         self.tableWidget.viewport().update()
         self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
+        self.resize(self.tableWidget.width()+176, self.tableWidget.height()+196)
 
     def _handler_cell_value_changed(self, item):
         row = item.row()
@@ -182,27 +195,41 @@ class Form(QMainWindow):
 class ConnectionForm(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('connection setting')
+        self.setWindowTitle('Connection Setting')
         self.ipAddress = '127.0.0.1'
         self.port = 502
+
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok |
                                      QDialogButtonBox.Cancel)
+        buttonBox.setOrientation(Qt.Orientation.Vertical)
 
-        addressLabel = QLabel("&Ip address")
+        addressLabel = QLabel("&IP Address")
+        set_label_bold_font(addressLabel)
         self.addressEdit = QLineEdit(self.ipAddress)
         addressLabel.setBuddy(self.addressEdit)
 
         portLabel = QLabel("&Port")
+        set_label_bold_font(portLabel)
         self.portEdit = QLineEdit(str(self.port))
         portLabel.setBuddy(self.portEdit)
 
         layout = QGridLayout()
         layout.addWidget(addressLabel, 0, 0)
-        layout.addWidget(self.addressEdit, 0, 1)
-        layout.addWidget(portLabel, 1, 0)
+        layout.addWidget(self.addressEdit, 1, 0)
+        layout.addWidget(portLabel, 0, 1)
         layout.addWidget(self.portEdit, 1, 1)
-        layout.addWidget(buttonBox, 2, 0, 1, 2)
-        self.setLayout(layout)
+
+
+        frame = QFrame()
+        frame.setFrameStyle(QFrame.Shape.Box | QFrame.Shadow.Sunken)
+        frame.setLayout(layout)
+
+        totalLayout = QGridLayout()
+        totalLayout.addWidget(buttonBox, 0, 1)
+        totalLayout.addWidget(frame, 1, 0)
+
+
+        self.setLayout(totalLayout)
 
         buttonBox.accepted.connect(self.my_accept)
         buttonBox.rejected.connect(self.reject)
@@ -225,29 +252,33 @@ class ConnectionForm(QDialog):
 class SlaveDefinitionForm(QDialog):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle('slave definition setup')
+        self.setWindowTitle('Setup Slave Definition')
         buttonBox = QDialogButtonBox(QDialogButtonBox.Ok |
                                      QDialogButtonBox.Cancel)
         self.address = 0
         self.quantity = 10
-        addressLabel = QLabel("&Address")
+        addressLabel = QLabel("&Address:")
+        set_label_bold_font(addressLabel)
         self.addressEdit = QLineEdit(str(self.address))
         addressLabel.setBuddy(self.addressEdit)
 
-        quantityLabel = QLabel("&Quantity")
+        quantityLabel = QLabel("&Quantity:")
+        set_label_bold_font(quantityLabel)
         self.quantityEdit = QLineEdit(str(self.quantity))
         quantityLabel.setBuddy(self.quantityEdit)
 
         layout = QGridLayout()
         layout.addWidget(addressLabel, 0, 0)
-        layout.addWidget(self.addressEdit, 0, 1)
+        layout.addWidget(self.addressEdit, 0, 2)
         layout.addWidget(quantityLabel, 1, 0)
-        layout.addWidget(self.quantityEdit, 1, 1)
-        layout.addWidget(buttonBox, 2, 0, 1, 2)
+        layout.addWidget(self.quantityEdit, 1, 2)
+        layout.addWidget(buttonBox, 2, 0, 1, 3)
         self.setLayout(layout)
 
         buttonBox.accepted.connect(self.my_accept)
         buttonBox.rejected.connect(self.reject)
+
+        self.setWindowFlag(Qt.WindowType.MSWindowsFixedSizeDialogHint)
 
     def my_accept(self):
         try:
