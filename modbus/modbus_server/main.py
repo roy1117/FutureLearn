@@ -22,6 +22,7 @@ class Form(QMainWindow):
         self.isThreadRunning = False
         self.columnOffset = None
         self.rowOffset = None
+        self.server = None
 
         # Define a table widget
         self.tableWidget = QTableWidget()
@@ -43,22 +44,41 @@ class Form(QMainWindow):
         connectionAction.setStatusTip(helpText)
         connectionAction.triggered.connect(self.ask_server_definition)
 
+        disconnectionAction = QAction("&Disconnection", self)
+        helpText = "Disconnection"
+        disconnectionAction.setToolTip(helpText)
+        disconnectionAction.setStatusTip(helpText)
+        disconnectionAction.triggered.connect(self._close_server)
+
         setupAction = QAction("&Setup", self)
         helpText = "Slave Definition"
         setupAction.setToolTip(helpText)
         setupAction.setStatusTip(helpText)
         setupAction.triggered.connect(self.ask_slave_definition)
 
-        fileMenu = QMenuBar()
-        fileMenu.addAction(connectionAction)
-        fileMenu.addAction(setupAction)
-        self.setMenuBar(fileMenu)
+        connectionMenu = QMenu('&Connection', self)
+        connectionMenu.addAction(connectionAction)
+        connectionMenu.addAction(disconnectionAction)
+
+
+        menuBar = QMenuBar()
+        menuBar.addAction(setupAction)
+        menuBar.addMenu(connectionMenu)
+        self.setMenuBar(menuBar)
 
         self.tableWidget.itemChanged.connect(self._handler_cell_value_changed)
         self.ask_server_definition()
         self.ask_slave_definition()
 
-
+    def _close_server(self):
+        try:
+            if self.server is not None:
+                if self.server.is_run:
+                    self.server.stop()
+                    print('server disconnected successfully')
+        except Exception as e:
+            print(e)
+            QMessageBox.warning(self, 'Disconnection error', 'disconnection failed!')
 
     def ask_server_definition(self):
         if self.connectionForm.exec_():
@@ -81,7 +101,8 @@ class Form(QMainWindow):
 
     def _open_server(self):
         try:
-            self.server = ModbusServer(self.ipAddress, self.port, no_block=True)
+            if self.server is None:
+                self.server = ModbusServer(self.ipAddress, self.port, no_block=True)
             self.server.start()
             self.setWindowTitle('Modbus Slave, ip address : {0}, port : {1}'.format(self.ipAddress, self.port))
         except Exception as e:
@@ -113,7 +134,7 @@ class Form(QMainWindow):
         self.rowOffset = self.address - self.columnOffset * 10
         self.tableWidget.setColumnCount(columnCount)
         for i in range(columnCount):
-            self.tableWidget.setHorizontalHeaderItem(i, QTableWidgetItem(str(i+self.columnOffset)))
+            self.tableWidget.setHorizontalHeaderItem(i, QTableWidgetItem(str((i+self.columnOffset)*10)))
         for i in range(10):
             self.tableWidget.setVerticalHeaderItem(i, QTableWidgetItem(str(i)))
         for i in range(columnCount * 10):
