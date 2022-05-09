@@ -81,6 +81,9 @@ class MainWindow(QMainWindow):
         fontMenu.addSeparator()
         fontMenu.addAction(alignAction)
 
+        self.imageLabel.addAction(lightAction)
+        self.imageLabel.addAction(boldAction)
+
         editMenu.addMenu(fontMenu)
 
         MenuBar = QMenuBar()
@@ -110,6 +113,8 @@ class MainWindow(QMainWindow):
     def print_checked_option(self):
         print(self.fontActionGroup.checkedAction().text())
 
+    def contextMenuEvent(self, event):
+        print('context menu')
 
 class Form(QDialog):
     def __init__(self, parent=None):
