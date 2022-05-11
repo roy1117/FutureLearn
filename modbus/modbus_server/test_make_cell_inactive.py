@@ -14,7 +14,9 @@ class Form(QDialog):
         self.setLayout(gridlayout)
 
         # self.tableWidget.itemChanged.connect(self.edit_value)
-        self.tableWidget.setItem(1, 1, QTableWidgetItem('Test'))
+        tableWidgetItem = QTableWidgetItem('Test')
+        self.tableWidget.setItem(1, 1, tableWidgetItem)
+        tableWidgetItem.setText('Changed')
         self.tableWidget.setItem(0, 0, QTableWidgetItem('Test'))
         self.testItem = QTableWidgetItem()
         self.testItem.setFlags(Qt.ItemFlag.NoItemFlags)
