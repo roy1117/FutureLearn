@@ -176,7 +176,7 @@ class Form(QMainWindow):
                 DataBank.set_words(address, [val])
             except Exception as e:
                 QMessageBox.warning(self, 'Warning', 'Only integer is acceptable')
-                self.tableWidget.set_data(row, col, QTableWidgetItem(str(pre_val)))
+                self.tableWidget.setItem(row, col, QTableWidgetItem(str(pre_val)))
                 print(e)
 
     def handler_data_bank_changed(self):
