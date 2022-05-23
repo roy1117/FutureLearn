@@ -7,6 +7,9 @@ from PyQt5.QtGui import *
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
+        settings = QSettings()
+        geometry = settings.value('geometry', '')
+        self.restoreGeometry(geometry)
         self.image = QImage()
         self.dirty = False
         self.filename = None
@@ -106,6 +109,9 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
         print('terminating..')
+        settings = QSettings()
+        geometry = self.saveGeometry()
+        settings.setValue('geometry', geometry)
 
     def fileNew(self):
         print('Hi')
@@ -127,6 +133,9 @@ class Form(QDialog):
         self.setLayout(gridLayout)
 
 app = QApplication(sys.argv)
+app.setOrganizationName('Roys')
+app.setOrganizationDomain('KR')
+app.setApplicationName("Test main window")
 main = MainWindow()
 main.show()
 app.exec_()
