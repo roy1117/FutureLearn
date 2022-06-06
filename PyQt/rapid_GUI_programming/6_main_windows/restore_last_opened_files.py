@@ -37,12 +37,68 @@ class Form(QMainWindow):
         fileMenu.addAction(openAction)
         fileMenu.addMenu(recentMenu)
 
+        mirrorHorizontally = QAction("mirror horizontally", self)
+        mirrorHorizontally.triggered.connect(self.mirror_horizontally)
+
+        mirrorVetically = QAction("mirror vertically", self)
+        mirrorVetically.triggered.connect(self.mirror_vertically)
+
+        zoomImage = QAction("zoom image", self)
+        zoomImage.triggered.connect(self.zoom_image)
+
+        self.zoomSpinBox = QSpinBox()
+        self.zoomSpinBox.setValue(100)
+        self.zoomSpinBox.setMinimum(1)
+        self.zoomSpinBox.setMaximum(400)
+        self.zoomLabel = QLabel("Zoom")
+        self.zoomSpinBox.valueChanged.connect(self.scale_image)
+
+        editMenu = QMenu("Edit", self)
+        editMenu.addAction(mirrorHorizontally)
+        editMenu.addAction(mirrorVetically)
+        editMenu.addAction(zoomImage)
+
         menubar = QMenuBar()
         self.setMenuBar(menubar)
         menubar.addMenu(fileMenu)
+        menubar.addMenu(editMenu)
+
+        toobar = QToolBar(self)
+        toobar.addWidget(self.zoomLabel)
+        toobar.addWidget(self.zoomSpinBox)
+        self.addToolBar(toobar)
 
         for i in self.lastFilenames:
             self.append_action(recentMenu, i, self.recent_action_triggered)
+
+    def scale_image(self, percent):
+        factor = percent/100.0
+        image = self.pixmap.toImage()
+        width = int(image.width() * factor)
+        height = int(image.height() * factor)
+        size = QSize(width, height)
+        image = image.scaled(size)
+        pixmap = QPixmap()
+        pixmap.convertFromImage(image)
+        self.imageLabel.setPixmap(pixmap)
+
+    def zoom_image(self):
+        percent, ok = QInputDialog.getInt(self, "Zoom Image", "Enter the integer", 100, 1, 400)
+        self.zoomSpinBox.setValue(percent)
+
+    def mirror_horizontally(self):
+        self.pixmap = self.imageLabel.pixmap()
+        image = self.pixmap.toImage()
+        image = image.mirrored(True, False)
+        self.pixmap.convertFromImage(image)
+        self.imageLabel.setPixmap(self.pixmap)
+
+    def mirror_vertically(self):
+        self.pixmap = self.imageLabel.pixmap()
+        image = self.pixmap.toImage()
+        image = image.mirrored(False, True)
+        self.pixmap.convertFromImage(image)
+        self.imageLabel.setPixmap(self.pixmap)
 
     def open_file_dialog(self):
         fname = QFileDialog.getOpenFileNames(self, 'Open File', './images', 'All File(*);; My Image File(*.png *.jpg)')[0][0]
