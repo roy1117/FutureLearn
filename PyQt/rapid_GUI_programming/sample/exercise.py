@@ -5,7 +5,8 @@ import sys
 class Form(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        label1 = QLabel("Principla:")
+        label1 = QLabel("Principal:")
+        # The QDouble spin box provides a spin box widget that takes doubles..
         self.spinbox1 = QDoubleSpinBox()
         self.spinbox1.setSingleStep(10)
         self.spinbox1.setPrefix("$ ")

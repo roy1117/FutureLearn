@@ -29,6 +29,8 @@ try:
         raise ValueError
     hours, mins = sys.argv[1].split(":")
     due = QtCore.QTime(int(hours), int(mins))
+    print(due)
+    # For example, the time 23:30:55.746 is valid, but 24:12:30 is invalid.
     if not due.isValid():
         raise ZeroDivisionError
     if len(sys.argv) > 2:
@@ -53,5 +55,5 @@ label = QtWidgets.QLabel("<font color=red size=72><b>" + message + "</b></font>"
 label.setWindowFlags(QtCore.Qt.SplashScreen|QtCore.Qt.WindowStaysOnTopHint)
 label.show()
 QtCore.QTimer.singleShot(5000, print_hi)
-QtCore.QTimer.singleShot(10000, app.quit) # 1 minute
+QtCore.QTimer.singleShot(10000, app.quit) #10 sec
 app.exec_()

@@ -5,6 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+
 class Form(QDialog):
     def __init__(self, parent=None):
         super(Form, self).__init__(parent)
@@ -28,7 +29,9 @@ class Form(QDialog):
         except:
             self.browser.append("<font color=red>%s is invalid!</font>" % text)
 
+
 app = QApplication(sys.argv)
+# Set application to close when the last window is closed
 app.setQuitOnLastWindowClosed(False)
 form = Form()
 form.show()
