@@ -2,6 +2,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import sys
 
+
 class PenPropertiesDlg(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -18,7 +19,6 @@ class PenPropertiesDlg(QDialog):
         okButton = QPushButton("&OK")
         cancelButton = QPushButton("Cancel")
 
-
         layout = QGridLayout()
         layout.addWidget(widthLabel, 0, 0)
         layout.addWidget(self.widthSpinBox, 0, 1)
@@ -26,8 +26,12 @@ class PenPropertiesDlg(QDialog):
         layout.addWidget(styleLabel, 1, 0)
         layout.addWidget(self.styleComboBox, 1, 1, 1, 2)
         buttonlayout = QHBoxLayout()
-        buttonlayout.addStretch(1)
+
+        # Add empty space which stretches when resizing
+        # Without stretch, layout is determined by size policy
+        # argument passed is stretch factor
         buttonlayout.addWidget(okButton)
+        buttonlayout.addStretch(1)
         buttonlayout.addWidget(cancelButton)
         buttonlayout.addStretch(1)
         layout.addLayout(buttonlayout, 2, 0, 1, 3)
