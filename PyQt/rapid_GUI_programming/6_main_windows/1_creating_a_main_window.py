@@ -4,12 +4,16 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
+
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
         settings = QSettings()
         geometry = settings.value('geometry', '')
-        self.restoreGeometry(geometry)
+        try:
+            self.restoreGeometry(geometry)
+        except Exception as e:
+            print(e)
         self.image = QImage()
         self.dirty = False
         self.filename = None
