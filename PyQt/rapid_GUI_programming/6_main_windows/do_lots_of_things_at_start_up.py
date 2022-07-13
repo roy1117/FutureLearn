@@ -6,7 +6,13 @@ import sys
 class Form(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        QTimer.singleShot(0, self.load_files)
+        progressLabel = QLabel('Progress')
+        layout = QGridLayout()
+        layout.addWidget(progressLabel, 0, 0)
+        centralWidget = QWidget()
+        self.setCentralWidget(centralWidget)
+        centralWidget.setLayout(layout)
+        QTimer.singleShot(5000, self.load_files)
 
     def load_files(self):
         for i in range(10):

@@ -39,7 +39,7 @@ class Sensor(QDial):
 
     def connect_group(self, tag):
         for i in self.sensor_group[tag]:
-            i.valueChanged.connect(self.setValue)
+            i.updateValue.connect(self.setValue)
         for i in self.sensor_group[tag]:
             self.valueChanged.connect(i.setValue)
 
