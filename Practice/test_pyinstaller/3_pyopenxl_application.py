@@ -12,6 +12,7 @@ for i in range(10):
     data.append(temp)
     temp = []
 
+print(data)
 
 for i in range(10):
     for j in range(10):
