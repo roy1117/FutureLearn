@@ -1,4 +1,6 @@
 import sys
+
+import PyQt5.QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -7,33 +9,74 @@ from PyQt5.QtGui import *
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        centralWidget = QWidget()
-        self.setCentralWidget(centralWidget)
+        self.resize(1500, 800)
+
+        neuronNetwork = NeuronNetowrk(sizes=[30, 16, 10])
+        scrollArea = QScrollArea()
+        scrollArea.setWidget(neuronNetwork)
+        self.setCentralWidget(scrollArea)
+        scrollArea.setWidgetResizable(True)
+
+
+class NeuronNetowrk(QWidget):
+    def __init__(self, sizes, parent=None):
+        super().__init__(parent)
+        self.sizes = sizes
         layout = QGridLayout()
-        centralWidget.setLayout(layout)
+        # Setting first layer
+        self.network = []
+        for layer, number_of_perceptrons in enumerate(self.sizes):
+            self.network.append([])
+            for i in range(number_of_perceptrons):
+                perceptron = Perceptron(i+1)
+                self.network[layer].append(perceptron)
+                layout.addWidget(perceptron, i, layer)
 
-        perceptron1 = Perceptron(1)
-        perceptron2 = Perceptron(2)
-        perceptron3 = Perceptron(3)
-        perceptron4 = Perceptron(4)
+        self.setLayout(layout)
 
-        layout.addWidget(perceptron1, 0, 0)
-        layout.addWidget(perceptron2, 1, 0)
-        layout.addWidget(perceptron3, 0, 1)
-        layout.addWidget(perceptron4, 1, 1)
+    def paintEvent(self, e):
+        super().paintEvent(e)
+        painter = QPainter()
+        painter.begin(self)
+        painter.setViewport(0, 0, self.width(), self.height())
+        pen = QPen()
+        pen.setColor(QColor('black'))
+        pen.setWidth(3)
+        painter.setPen(pen)
+
+        for layer in range(len(self.sizes)-1):
+            for index_of_previous_perceptron in range(self.sizes[layer]):
+                for index_of_next_perceptron in range(self.sizes[layer+1]):
+                    rect = self.network[layer][index_of_previous_perceptron].geometry()
+                    x = rect.x()
+                    y = rect.y()
+                    width = rect.width()
+                    height = rect.height()
+                    outPoint = QPoint(x+width, y+int(height/2))
+
+                    rect = self.network[layer+1][index_of_next_perceptron].geometry()
+                    x = rect.x()
+                    y = rect.y()
+                    width = rect.width()
+                    height = rect.height()
+                    inPoint = QPoint(x, y + int(height / 2))
+
+                    painter.drawLine(outPoint, inPoint)
+
+        painter.end()
 
 
 class Perceptron(QWidget):
     def __init__(self, bias, parent=None):
         super().__init__(parent)
         self.bias = bias
-        self.setGeometry(0, 0, 300, 300)
+        self.setMinimumSize(100, 100)
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     def paintEvent(self, e):
         painter = QPainter()
         painter.begin(self)
-        painter.setViewport(0, 0, 300, 300)
-        painter.setWindow(0, 0, 300, 300)
+        painter.setViewport(0, 0, self.width(), self.height())
         pen = QPen()
         pen.setWidth(3)
         pen.setColor(QColor('black'))
@@ -42,16 +85,14 @@ class Perceptron(QWidget):
         brush.setStyle(Qt.Dense1Pattern)
         painter.setBrush(brush)
         painter.setPen(pen)
-        painter.drawRect(0, 0, self.width(), self.height())
+        painter.drawEllipse(0, 0, self.width(), self.height())
 
-        pen.setColor(QColor('black'))
-        painter.setPen(pen)
         font = QFont()
         font.setFamily('Times')
         font.setBold(True)
-        font.setPointSize(5)
+        font.setPointSize(15)
         painter.setFont(font)
-        painter.drawText(self.width()-10, self.height()-10, str(self.bias))
+        painter.drawText(0, 0, self.width(), self.height(), Qt.AlignCenter, str(self.bias))
 
         painter.end()
 
