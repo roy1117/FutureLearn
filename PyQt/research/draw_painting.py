@@ -13,47 +13,52 @@ class Form(QMainWindow):
         self.setCentralWidget(centralWidget)
         self.resize(500, 500)
         self.saveButton = QPushButton("save")
-        self.saveButton.clicked.connect(self.save_iamge)
+        self.saveButton.clicked.connect(self.label1.save_iamge)
         self.readButton = QPushButton("read")
         self.readButton.clicked.connect(self.read_binary)
+        self.clean = QPushButton("clean")
+        self.clean.clicked.connect(self.label1.clean)
 
         gridLayout = QGridLayout()
         gridLayout.addWidget(self.label1, 0, 0)
         gridLayout.addWidget(self.saveButton, 1, 0)
         gridLayout.addWidget(self.readButton, 2, 0)
+        gridLayout.addWidget(self.clean, 3, 0)
         centralWidget.setLayout(gridLayout)
-
-
-    def save_iamge(self):
-        pixmap = QPixmap(self.label1.size())
-        pixmap.scroll(50, 50, pixmap.rect())
-        self.render(pixmap)
-        pixmap.save("Test.bmp", "BMP", -1)
 
     def read_binary(self):
         with open("Test.bmp", 'rb') as file:
             self.bytes_data = file.read()
-            print(self.bytes_data)
-
-
-
+            hex_data = self.bytes_data.hex()
+            print(hex_data)
 
 
 class Label(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setMinimumSize(500, 500)
-        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        self.setMinimumSize(28, 28)
+        self.setMaximumSize(28, 28)
+        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         self.last_x, self.last_y = None, None
         pixmap = QPixmap(self.width(), self.height())
         self.setPixmap(pixmap)
+
+    def save_iamge(self):
+        pixmap = QPixmap(self.size())
+        self.render(pixmap)
+        # pixmap.save("Test.bmp", "BMP", -1)
+        image = QImage()
+        image = pixmap.toImage()
+        image.save("Test.bmp", "BMP", -1)
+        rawColor = image.pixel(0, 0)
+        rgb = QColor(rawColor).getRgb()
+        print(rgb)
 
     def paintEvent(self, e):
         super().paintEvent(e)
 
     def mousePressEvent(self, e):
         super().mousePressEvent(e)
-
 
     def mouseMoveEvent(self, e):
         super().mouseMoveEvent(e)
@@ -69,7 +74,6 @@ class Label(QLabel):
         painter.setPen(pen)
         painter.drawLine(self.last_x, self.last_y, e.x(), e.y())
 
-
         painter.end()
         self.update()
 
@@ -77,6 +81,16 @@ class Label(QLabel):
         self.last_x = e.x()
         self.last_y = e.y()
 
+    def clean(self):
+        painter = QPainter(self.pixmap())
+        painter.begin(self)
+        brush = QBrush()
+        brush.setStyle(Qt.SolidPattern)
+        brush.setColor(QColor('black'))
+        painter.setBrush(brush)
+        painter.drawRect(self.rect())
+        painter.end()
+        self.update()
 
 app = QApplication(sys.argv)
 form = Form()
