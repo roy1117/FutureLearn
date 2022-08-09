@@ -2,5 +2,9 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/DeepLearningPython" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/PyQt/json_editor/jsonEditor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/PyQt/json_editor/jsonEditor/codeEditor" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/hpc-python" vcs="Git" />
   </component>
 </project>
