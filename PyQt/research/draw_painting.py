@@ -15,7 +15,7 @@ class Form(QMainWindow):
         self.saveButton = QPushButton("save")
         self.saveButton.clicked.connect(self.label1.save_iamge)
         self.readButton = QPushButton("read")
-        self.readButton.clicked.connect(self.read_binary)
+        self.readButton.clicked.connect(self.label1.read_binary)
         self.clean = QPushButton("clean")
         self.clean.clicked.connect(self.label1.clean)
 
@@ -26,11 +26,7 @@ class Form(QMainWindow):
         gridLayout.addWidget(self.clean, 3, 0)
         centralWidget.setLayout(gridLayout)
 
-    def read_binary(self):
-        with open("Test.bmp", 'rb') as file:
-            self.bytes_data = file.read()
-            hex_data = self.bytes_data.hex()
-            print(hex_data)
+
 
 
 class Label(QLabel):
@@ -46,13 +42,21 @@ class Label(QLabel):
     def save_iamge(self):
         pixmap = QPixmap(self.size())
         self.render(pixmap)
-        # pixmap.save("Test.bmp", "BMP", -1)
         image = QImage()
         image = pixmap.toImage()
         image.save("Test.bmp", "BMP", -1)
-        rawColor = image.pixel(0, 0)
-        rgb = QColor(rawColor).getRgb()
-        print(rgb)
+
+    def read_binary(self):
+        pixmap = QPixmap(self.size())
+        self.render(pixmap)
+        image = QImage()
+        image = pixmap.toImage()
+        for i in range(0, 28):
+            for j in range(0, 28):
+                rawColor = image.pixel(i, j)
+                rgb = QColor(rawColor).getRgb()
+                print(rgb)
+
 
     def paintEvent(self, e):
         super().paintEvent(e)

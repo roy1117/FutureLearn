@@ -37,7 +37,6 @@ class NeuronNetowrk(QWidget):
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x)
                         for x, y in zip(sizes[:-1], sizes[1:])]
-        print(self.weights[1])
         layout = QGridLayout()
         # Setting first layer
         self.network = []

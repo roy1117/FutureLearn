@@ -13,7 +13,7 @@ def wait_until_timeout(e, t):
     while not e.isSet():
         event_is_set = e.wait(t)
         if event_is_set:
-            print('wait forever detected event set')
+            print('wait_until_timeout detected event set')
         else:
             print('timeout happened')
 
