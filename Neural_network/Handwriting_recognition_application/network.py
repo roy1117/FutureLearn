@@ -15,11 +15,14 @@ and omits many desirable features.
 #### Libraries
 # Standard library
 import random
-
+from PyQt5.QtCore import *
 # Third-party libraries
 import numpy as np
 
 class CustomNetwork(object):
+
+    update_gui = pyqtSignal()
+
     def __init__(self, sizes):
         """The list ``sizes`` contains the number of neurons in the
         respective layers of the network.  For example, if the list
@@ -80,6 +83,7 @@ class CustomNetwork(object):
                         for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(mini_batch))*nb
                        for b, nb in zip(self.biases, nabla_b)]
+        self.update_gui.emit()
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the

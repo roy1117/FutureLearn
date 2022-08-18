@@ -17,26 +17,10 @@ def get_color(raw_value):
         red_thickness = 255 - int(((raw_value - MIN_RAW_VALUE) / (half_value - MIN_RAW_VALUE)) * 255)
     return QColor(red_thickness, 0, blue_thickness, 255)
 
-class MainWindow(QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.resize(1500, 800)
-
-        neuronNetwork = NeuronNetowrk(sizes=[30, 16, 10])
-        scrollArea = QScrollArea()
-        scrollArea.setWidget(neuronNetwork)
-        self.setCentralWidget(scrollArea)
-        scrollArea.setWidgetResizable(True)
-
 
 class NeuronNetowrk(QWidget):
-    def __init__(self, sizes, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.sizes = sizes
-        # for test only, need to be moved to arguments
-        self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
-        self.weights = [np.random.randn(y, x)
-                        for x, y in zip(sizes[:-1], sizes[1:])]
         layout = QGridLayout()
         # Setting first layer
         self.network = []
@@ -121,8 +105,4 @@ class Perceptron(QWidget):
         painter.end()
 
 
-app = QApplication(sys.argv)
-mainWindow = MainWindow()
-mainWindow.show()
-app.exec_()
 
