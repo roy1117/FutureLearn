@@ -20,9 +20,6 @@ from PyQt5.QtCore import *
 import numpy as np
 
 class CustomNetwork(object):
-
-    update_gui = pyqtSignal()
-
     def __init__(self, sizes):
         """The list ``sizes`` contains the number of neurons in the
         respective layers of the network.  For example, if the list
@@ -83,7 +80,6 @@ class CustomNetwork(object):
                         for w, nw in zip(self.weights, nabla_w)]
         self.biases = [b-(eta/len(mini_batch))*nb
                        for b, nb in zip(self.biases, nabla_b)]
-        self.update_gui.emit()
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
@@ -133,6 +129,22 @@ class CustomNetwork(object):
         """Return the vector of partial derivatives \partial C_x /
         \partial a for the output activations."""
         return (output_activations-y)
+
+
+class Wrapper(CustomNetwork, QObject):
+    update_gui = pyqtSignal()
+
+    def __init__(self, sizes):
+        CustomNetwork.__init__(self, sizes)
+        QObject.__init__(self)
+        # self.update_gui.connect(self.print_hello)
+
+    # def update_mini_batch(self, mini_batch, eta):
+    #     CustomNetwork.update_mini_batch(mini_batch, eta)
+
+    def print_hello(self):
+        print("hello")
+
 
 #### Miscellaneous functions
 def sigmoid(z):
