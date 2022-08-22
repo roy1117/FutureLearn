@@ -145,7 +145,6 @@ class Wrapper(CustomNetwork, QObject):
     def print_hello(self):
         print("hello")
 
-
 #### Miscellaneous functions
 def sigmoid(z):
     """The sigmoid function."""

@@ -1,10 +1,11 @@
 import perceptron_widget
+import pixel_widget
 import network
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 import sys
 import mnist_loader
-ETA = 300
+ETA = 0.3
 
 
 class MainWindow(QMainWindow):
@@ -19,18 +20,21 @@ class MainWindow(QMainWindow):
         self.uploadOneSampleButton.clicked.connect(self.neuronNetwork.upload_one_sample)
         self.feedOneSampleButton = QPushButton("Feed one sample")
         self.feedOneSampleButton.clicked.connect(self.feed_one_sample)
-        self.trainingDataLabel = QLabel("0")
+        self.trainingDataLabel = QLabel("loaded training data : 0")
+        self.pixelScreen = pixel_widget.PixelScreen()
 
+        self.neuronNetwork.update_input_signal.connect(self.pixelScreen.set_inputs)
 
         scrollArea = QScrollArea()
         scrollArea.setWidget(self.neuronNetwork)
 
         gridLayout = QGridLayout()
-        gridLayout.addWidget(scrollArea, 0, 0, 1, 3)
-        gridLayout.addWidget(self.trainingDataLabel, 1, 0)
-        gridLayout.addWidget(self.loadDataButton, 2, 0)
-        gridLayout.addWidget(self.uploadOneSampleButton, 2, 1)
-        gridLayout.addWidget(self.feedOneSampleButton, 2, 2)
+        gridLayout.addWidget(self.pixelScreen, 0, 0, 1, 3)
+        gridLayout.addWidget(scrollArea, 0, 1, 1, 3)
+        gridLayout.addWidget(self.trainingDataLabel, 1, 1)
+        gridLayout.addWidget(self.loadDataButton, 2, 1)
+        gridLayout.addWidget(self.uploadOneSampleButton, 2, 2)
+        gridLayout.addWidget(self.feedOneSampleButton, 2, 3)
         centralWidget.setLayout(gridLayout)
 
         self.setCentralWidget(centralWidget)
@@ -52,7 +56,9 @@ class MainWindow(QMainWindow):
         self.neuronNetwork.feed_one_sample(ETA)
 
     def update_training_data_label(self):
-        self.trainingDataLabel.setText(str(len(self.neuronNetwork.training_data)))
+        text = "loaded training data : "
+        data_length = str(len(self.neuronNetwork.training_data))
+        self.trainingDataLabel.setText(text + data_length)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

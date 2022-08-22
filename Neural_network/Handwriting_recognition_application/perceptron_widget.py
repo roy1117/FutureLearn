@@ -32,6 +32,8 @@ def get_color(raw_value):
 
 class NeuronNetowrk(QWidget):
 
+    update_input_signal = pyqtSignal(np.ndarray)
+
     def __init__(self, sizes, parent=None):
         super().__init__(parent)
         """The list ``sizes`` contains the number of neurons in the
@@ -52,6 +54,7 @@ class NeuronNetowrk(QWidget):
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x)
                         for x, y in zip(sizes[:-1], sizes[1:])]
+
         """PyQt Layout initialization"""
         layout = QGridLayout()
         # Setting first layer
@@ -91,6 +94,7 @@ class NeuronNetowrk(QWidget):
     def upload_one_sample(self):
         self.mini_batch = self.training_data[0:1]
         self.update_input_perceptrons(self.mini_batch[0][0])
+        self.update_input_signal.emit(self.mini_batch[0][0])
 
     def feed_one_sample(self, eta):
         self.update_mini_batch(self.mini_batch, eta)
