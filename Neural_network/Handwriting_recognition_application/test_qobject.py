@@ -2,22 +2,26 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 import sys
 
-class Student1():
-    def __init__(self, name):
-        self.name = name
-
-
-class Student2(Student1, QObject):
+class Student1(QObject):
     update_gui = pyqtSignal()
 
     def __init__(self, name):
-        Student1.__init__(self, name)
-        QObject.__init__(self)
-        self.update_gui.connect(self.print_hi)
+        super().__init__()
+        self.name = name
+
+    def check_input(self):
+        while True:
+            if input("Enter input") == 'yes':
+                self.update_gui.emit()
+
+class School():
+    def __init__(self):
+        self.roy = Student1('Roy')
+        self.roy.update_gui.connect(self.print_hi)
 
     def print_hi(self):
         print('Hi')
 
 
-roy = Student2('Roy')
-print(roy.name)
+harvard = School()
+harvard.roy.check_input()
