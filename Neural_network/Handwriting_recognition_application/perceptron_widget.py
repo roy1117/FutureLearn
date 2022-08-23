@@ -101,6 +101,10 @@ class NeuronNetowrk(QWidget):
     def feed_one_sample(self, eta):
         self.update_mini_batch(self.mini_batch, eta)
 
+    def feed_one_batch(self, eta, mini_batch_size):
+        self.mini_batch = self.training_data[0:mini_batch_size]
+        self.update_mini_batch(self.mini_batch, eta)
+
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying
         gradient descent using backpropagation to a single mini batch.
@@ -117,6 +121,7 @@ class NeuronNetowrk(QWidget):
         self.biases = [b-(eta/len(mini_batch))*nb
                        for b, nb in zip(self.biases, nabla_b)]
         self.update_perceptrons_bias()
+        self.update()
 
     def backprop(self, x, y):
         """Return a tuple ``(nabla_b, nabla_w)`` representing the
@@ -202,8 +207,10 @@ class NeuronNetowrk(QWidget):
         painter.end()
 
     def update_perceptrons_bias(self):
-        "Implementation required"
-        pass
+        for layer in range(len(self.network)-1):
+            for index, perceptron in enumerate(self.network[layer+1]):
+                perceptron.setBias(self.biases[layer][index][0])
+
 
     def update_input_perceptrons(self, input):
         try:
