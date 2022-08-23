@@ -71,6 +71,7 @@ class NeuronNetowrk(QWidget):
                 layout.addWidget(perceptron, i, layer)
 
         self.setLayout(layout)
+        self.setStyleSheet("background-color:#252525;")
 
     def feedforward(self, a):
         """Return the output of the network if ``a`` is input."""
@@ -94,7 +95,8 @@ class NeuronNetowrk(QWidget):
     def upload_one_sample(self):
         self.mini_batch = self.training_data[0:1]
         self.update_input_perceptrons(self.mini_batch[0][0])
-        self.update_input_signal.emit(self.mini_batch[0][0])
+        activation = self.feedforward(self.mini_batch[0][0])
+        self.update_out_perceptrons(activation)
 
     def feed_one_sample(self, eta):
         self.update_mini_batch(self.mini_batch, eta)
@@ -207,7 +209,15 @@ class NeuronNetowrk(QWidget):
         try:
             for index, value in enumerate(input):
                 self.network[0][index].setBias(value[0])
-                print(value[0])
+        except Exception as e:
+            print(e)
+        else:
+            self.update_input_signal.emit(input)
+
+    def update_out_perceptrons(self, activation):
+        try:
+            for index, value in enumerate(activation):
+                self.network[2][index].setBias(value[0])
         except Exception as e:
             print(e)
 

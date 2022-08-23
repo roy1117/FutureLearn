@@ -29,7 +29,7 @@ class MainWindow(QMainWindow):
         scrollArea.setWidget(self.neuronNetwork)
 
         gridLayout = QGridLayout()
-        gridLayout.addWidget(self.pixelScreen, 0, 0, 1, 3)
+        gridLayout.addWidget(self.pixelScreen, 0, 0)
         gridLayout.addWidget(scrollArea, 0, 1, 1, 3)
         gridLayout.addWidget(self.trainingDataLabel, 1, 1)
         gridLayout.addWidget(self.loadDataButton, 2, 1)
