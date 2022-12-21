@@ -25,7 +25,7 @@ from sklearn.svm import SVC
 
 validation_size = 0.20
 seed = 7
-number_of_data = 2000
+number_of_data = 3000
 # Load Dataset
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 training_data = list(training_data)
@@ -53,7 +53,7 @@ names = []
 name = 'SVM'
 model = SVC()
 
-kfold = model_selection.KFold(n_splits=3, shuffle=True, random_state = seed)
+kfold = model_selection.KFold(n_splits=4, shuffle=True, random_state = seed)
 cv_results = model_selection.cross_val_score(model, X_train, Y_train, cv=kfold, scoring=scoring)
 results.append(cv_results)
 names.append(name)
