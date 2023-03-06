@@ -19,7 +19,7 @@ data = np.hstack((class_one, class_two))
 df = pd.DataFrame(data, columns=['x', 'y', 'x1', 'x2'])
 
 # Create scatter plot of data points in both classes.
-class_ax = df.plot.scatter(x='x', y='y', color='Orange', label='+1');
-df.plot.scatter(x='x1', y='x2', color='LightBlue', label='-1', ax=class_ax);
+class_ax = df.plot.scatter(x='x', y='y', color='Orange', label='+1')
+df.plot.scatter(x='x1', y='x2', color='LightBlue', label='-1', ax=class_ax)
 
 plt.show()
