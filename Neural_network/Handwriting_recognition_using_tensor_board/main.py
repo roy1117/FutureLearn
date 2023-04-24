@@ -6,8 +6,26 @@ import random
 import torch
 import numpy as np
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
+
+training_data_x, training_data_y = list(zip(*training_data))
+training_data_x = training_data_x[0:10000]
+training_data_y = training_data_y[0:10000]
+training_data_x = np.array(training_data_x)
+training_data_y = np.array(training_data_y)
+training_data_x = torch.tensor(training_data_x, dtype=torch.float)
+training_data_y = torch.tensor(training_data_y, dtype=torch.float)
+training_data_x = training_data_x.reshape(len(training_data_x), 1, 784)
+training_data_y = training_data_y.reshape(len(training_data_y), 1, 10)
+training_data = zip(training_data_x, training_data_y)
 training_data = list(training_data)
-training_data = training_data[0:1000]
+
+test_data_x, test_data_y = list(zip(*test_data))
+test_data_x = np.array(test_data_x)
+test_data_y = np.array(test_data_y)
+test_data_x = torch.tensor(test_data_x, dtype=torch.float)
+test_data_x = test_data_x.reshape(len(test_data_x), 1, 784)
+test_data = zip(test_data_x, test_data_y)
+test_data = list(test_data)
 
 class Network(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -29,21 +47,15 @@ class Trainer:
         self.criterion = nn.MSELoss()
 
     def train_step(self, training_data, test_data, epochs, mini_batch_size):
-        training_data = list(training_data)
-        n = len(training_data)
-        test_data = list(test_data)
-        n_test = len(test_data)
         for j in range(epochs):
             random.shuffle(training_data)
+            n = len(training_data)
+            n_test= len(test_data)
             mini_batches = [
                 training_data[k:k + mini_batch_size]
                 for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 for x, y in mini_batch:
-                    x = torch.tensor(x, dtype=torch.float)
-                    x = x.reshape(1, 784)
-                    y = torch.tensor(y, dtype=torch.float)
-                    y = y.reshape(1, 10)
                     self.optimizer.zero_grad()
                     pred = self.model(x)
                     loss = self.criterion(y, pred)
@@ -59,8 +71,6 @@ class Trainer:
         neuron in the final layer has the highest activation."""
         test_results = []
         for x, y in test_data:
-            x = torch.tensor(x, dtype=torch.float)
-            x = x.reshape(1, 784)
             pred = model(x)
             test_results.append((torch.argmax(pred), y))
         return sum(int(x == y) for (x, y) in test_results)
