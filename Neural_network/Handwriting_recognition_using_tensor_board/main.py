@@ -5,6 +5,7 @@ import torch.optim as optim
 import random
 import torch
 import numpy as np
+from torch.utils.tensorboard import SummaryWriter
 training_data, validation_data, test_data = mnist_loader.load_data_wrapper()
 
 training_data_x, training_data_y = list(zip(*training_data))
@@ -61,8 +62,12 @@ class Trainer:
                     loss = self.criterion(y, pred)
                     loss.backward()
                     self.optimizer.step()
+            writer = SummaryWriter("torchlogs/")
+            writer.add_graph(model, x)
+            writer.close()
             print("Epoch {} : {} / {}".format(j, self.evaluate(test_data), n_test))
             print("Epoch {} complete".format(j))
+
 
     def evaluate(self, test_data):
         """Return the number of test inputs for which the neural
