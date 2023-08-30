@@ -1,11 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import copy
 
-
+REWARD = 1
+DISCOUNT_RATE = 1
 PROBABILITY = 0.4
-attempt = np.zeros(100)
-summary = np.zeros(100)
-ratio = np.zeros(100)
+attempt = np.zeros(101)
+summary = np.zeros(101)
+ratio = np.zeros(101)
+state_value = np.zeros(101)
 
 
 def coin_filp():
@@ -20,8 +23,30 @@ def rand_action(state):
     return np.random.randint(0, min(state, 100 - state) + 1)
 
 
+def get_action(state):
+    return min(state, 100 - state) + 1
+
+
+def value_evaluaion(old_state_value):
+    new_state_value = np.zeros(101)
+    for state in range(len(old_state_value) - 1):
+        number_of_possible_actions = get_action(state)
+        for action in range(number_of_possible_actions):
+            temp = 0
+            # lose
+            temp += (1/number_of_possible_actions) * 0.6 * (DISCOUNT_RATE * old_state_value[state - action])
+            # win
+            if state + action == 100:
+                reward = REWARD
+            else:
+                reward = 0
+            temp += (1/number_of_possible_actions) * 0.4 * (reward + DISCOUNT_RATE * old_state_value[state + action])
+            new_state_value[state] += temp
+    return new_state_value
+
+
 if __name__ == '__main__':
-    for i in range(1000):
+    for i in range(30000):
         # Set initial state randomly
         initial_state = np.random.randint(1, 100)
         state = initial_state
@@ -43,5 +68,15 @@ if __name__ == '__main__':
     print(ratio)
     plt.plot(ratio)
     plt.show()
+
+    # Value function test
+    for i in range(5000):
+        state_value = value_evaluaion(state_value)
+    print(state_value)
+
+    print(ratio - state_value)
+    print(max(ratio - state_value))
+
+
 
 
