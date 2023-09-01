@@ -11,6 +11,7 @@ ratio = np.zeros(101)
 state_value = np.zeros(101)
 policy = np.zeros(101)
 
+
 def coin_filp():
     selection = np.random.randint(0, 10)
     if selection < 4:
@@ -20,17 +21,17 @@ def coin_filp():
 
 
 def rand_action(state):
-    return np.random.randint(0, min(state, 100 - state) + 1)
+    return np.random.randint(1, min(state, 100 - state) + 1)
 
 
-def get_action(state):
-    return min(state, 100 - state) + 1
+def get_the_number_of_possible_actions(state):
+    return min(state, 100 - state)
 
 
 def value_evaluaion(old_state_value):
     new_state_value = np.zeros(101)
     for state in range(len(old_state_value) - 1):
-        number_of_possible_actions = get_action(state)
+        number_of_possible_actions = get_the_number_of_possible_actions(state)
         for action in range(number_of_possible_actions):
             temp = 0
             # lose
@@ -49,18 +50,19 @@ def value_iteration(old_state_value):
     new_state_value = np.zeros(101)
     policy = np.zeros(101)
     for state in range(len(old_state_value) - 1):
-        number_of_possible_actions = get_action(state)
-        temp = np.zeros(number_of_possible_actions)
-        for action in range(number_of_possible_actions):
+        number_of_possible_actions = get_the_number_of_possible_actions(state)
+        temp = np.zeros(number_of_possible_actions + 1)
+        for action in range(1, number_of_possible_actions):
             # lose
-            temp[action] += (1/number_of_possible_actions) * 0.6 * (DISCOUNT_RATE * old_state_value[state - action]) * 100000
+            temp[action] += (1/number_of_possible_actions) * 0.6 * (DISCOUNT_RATE * old_state_value[state - action])
             # win
             if state + action == 100:
                 reward = REWARD
             else:
                 reward = 0
-            temp[action] += (1/number_of_possible_actions) * 0.4 * (reward + DISCOUNT_RATE * old_state_value[state + action]) * 100000
-        max_action = np.argmax(temp)
+            temp[action] += (1/number_of_possible_actions) * 0.4 * (reward + DISCOUNT_RATE * old_state_value[state + action])
+        max_actions, = np.nonzero(temp == np.max(temp))
+        max_action = np.random.choice(max_actions)
 
         if state + max_action == 100:
             reward = REWARD
@@ -106,7 +108,7 @@ if __name__ == '__main__':
     # print(max(ratio - state_value))
 
     # Value Iteration
-    for i in range(5000):
+    for i in range(50000):
         state_value, policy = value_iteration(state_value)
     print(state_value)
     print(policy)
