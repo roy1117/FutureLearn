@@ -1,11 +1,13 @@
 from prettytable import PrettyTable
 import numpy as np
 import random
+import time
 
 DECK = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 10, 10, 10]
 
 class GameHandler:
-    def __init__(self, display_option=False, auto_play=True):
+    def __init__(self, display_option=False, auto_play=True, delay=0):
+        self.delay = delay
         self.agent = Agent()
         self.display_option = display_option
         self.auto_play = auto_play
@@ -79,19 +81,13 @@ class GameHandler:
                         self.game_display.add_row(["dealer's hit", choice, "X"])
                         self.game_display.add_row(["Sum", summation, "X"])
                         print(self.game_display)
-                    if summation > 21:
-                        game_end = True
-                        dealers_turn = False
-                        # dealer burst, player win
-                        self.result[0] += 1
-                        break
-                game_end = True
-                dealers_turn = False
-                if summation == sum(self.player_cards):
+                if summation > 21:
+                    print('dealer burst')
+                    self.result[0] += 1
+                elif summation == sum(self.player_cards):
                     # draw
                     self.result[2] += 1
                     print('the game draw')
-                    break
                 elif summation > sum(self.player_cards):
                     # dealer win
                     self.result[1] += 1
@@ -100,8 +96,11 @@ class GameHandler:
                     # player win
                     self.result[0] += 1
                     print('player won the game')
+                game_end = True
+                dealers_turn = False
             print('---------------game end------------------')
             print(self.result)
+            time.sleep(self.delay)
 
     def initiate_game(self):
         # distribute a card to dealer
@@ -155,16 +154,15 @@ class Agent:
         self.policy = np.full((10, 20, 2), 0.5)
 
     def get_action(self, state):
-        # TODO
-        probability = self.policy[state[0]][state[1]][state[2]]
-        action = random.ch(1, 2)
-
-
-
-
+        dealer_card = int(state[0] - 1)
+        player_sum = int(state[1] - 2)
+        usable_ace = int(state[2])
+        probability = self.policy[dealer_card][player_sum][usable_ace]
+        action = random.choices(["1", "2"], [probability, 1-probability])
+        return action[0]
 
 if __name__ == '__main__':
-    handler = GameHandler(display_option=True, auto_play=True)
+    handler = GameHandler(display_option=True, auto_play=True, delay=0)
     handler.start_game(10)
     # print(simulator.test_random_distribute(100000))
 
