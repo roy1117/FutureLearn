@@ -191,6 +191,8 @@ class Agent:
     def __init__(self):
         # policy = [dealer card, player card summation, usable ace]
         self.policy = np.full((10, 17), 0.5)
+        # A policy that sticks only when the summation is 20
+        self.policy[:, 16] = 0
         self.value_function = np.zeros((10, 17))
         self.visit_count = np.zeros((10, 17))
 
@@ -203,8 +205,6 @@ class Agent:
 
     def value_function_update(self, state_trace, result):
         for state in state_trace:
-            if state[0] == 10 and state[1] == 20:
-                print('debug')
             dealer_card = int(state[0] - 1)
             player_sum = int(state[1] - 4)
             visited_count = self.visit_count[dealer_card][player_sum]
@@ -222,7 +222,7 @@ class Agent:
 
 
 if __name__ == '__main__':
-    handler = GameHandler(display_option=True, auto_play=True, delay=0, update_value_function=True)
-    handler.start_game(1000)
+    handler = GameHandler(display_option=False, auto_play=True, delay=0, update_value_function=True)
+    handler.start_game(50000)
     print(handler.get_value_function())
     # print(simulator.test_random_distribute(100000))
