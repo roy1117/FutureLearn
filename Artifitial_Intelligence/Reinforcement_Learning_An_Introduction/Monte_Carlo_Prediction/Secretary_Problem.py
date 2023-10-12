@@ -3,17 +3,18 @@ import copy
 import numpy as np
 from prettytable import PrettyTable
 
-NUMBER_OF_CANDIDATES = 5
+NUMBER_OF_CANDIDATES = 10
 SCALE = 15
 CENTER_MIN = 50
 CENTER_MAX = 100
 GAMMA = 0.2
 
 class SecretaryGame():
-    def __init__(self, print_result=False, auto_play=False):
+    def __init__(self, print_result=False, print_summary=False, auto_play=False, exploring=True):
+        self.print_summary = print_summary
         self.print_result = print_result
         self.auto_play = auto_play
-        self.agent = Agent()
+        self.agent = Agent(exploring=exploring)
         self.game_summary = PrettyTable()
         self.game_summary.field_names = ['Total number of games', 'Win count', 'Lose count']
 
@@ -31,14 +32,19 @@ class SecretaryGame():
             print('------Candidates was like blow------')
             print(candidates)
 
-    def print_summary(self, win_count, lose_count, number_of_iterations, number_of_hiring, number_of_answer):
-        self.game_summary.add_row([number_of_iterations, win_count, lose_count])
-        for i in range(len(number_of_hiring)):
-            self.game_summary.add_row(['hire {0}'.format(i), int(number_of_hiring[i]), ''])
-        for i in range(len(number_of_answer)):
-            self.game_summary.add_row(['answer was {0}'.format(i), int(number_of_answer[i]), ''])
-        print(self.game_summary)
-        print(self.agent.policy)
+    def summary(self, win_count, lose_count, number_of_iterations, number_of_hiring, number_of_answer):
+        if not self.print_summary:
+            return
+        else:
+            self.game_summary.claer()
+            self.game_summary.field_names = ['Total number of games', 'Win count', 'Lose count']
+            self.game_summary.add_row([number_of_iterations, win_count, lose_count])
+            for i in range(len(number_of_hiring)):
+                self.game_summary.add_row(['hire {0}'.format(i), int(number_of_hiring[i]), ''])
+            for i in range(len(number_of_answer)):
+                self.game_summary.add_row(['answer was {0}'.format(i), int(number_of_answer[i]), ''])
+            print(self.game_summary)
+            print(self.agent.policy)
 
     def play_game(self, number_of_iterations):
         win_count = 0
@@ -85,16 +91,17 @@ class SecretaryGame():
                     break
             self.agent.update_action_value_function(trace=trace, result=result)
             self.result(choice=choice, candidates=candidates, result=result, answer=answer)
-        self.print_summary(win_count, lose_count, number_of_iterations, number_of_hiring, number_of_answer)
+        self.summary(win_count, lose_count, number_of_iterations, number_of_hiring, number_of_answer)
 
 
 class Agent():
-    def __init__(self):
+    def __init__(self, exploring):
+        self.exploring = exploring
         # Initializing policy -> 0.5, and action value function -> 0
         # We don't consider the last choice. At last we have to pick anyway
-        self.policy = [[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]
-        self.action_value = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
-        self.visited_count = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
+        self.policy = [[0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]]
+        self.action_value = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
+        self.visited_count = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
 
     def update_action_value_function(self, trace, result):
         for choice_index, is_best, action in trace:
@@ -119,7 +126,7 @@ class Agent():
     def get_action(self, policy, choice_index, is_best):
         # Explore Exploit
         result = random.choices(['Explore', 'Exploit'], [GAMMA, 1 - GAMMA])[0]
-        if result == 'Explore':
+        if result == 'Explore' and self.exploring:
             action = self.get_stochastic_aciton(0.5)
         else:
             action = self.get_stochastic_aciton(policy[is_best][choice_index])
@@ -155,7 +162,7 @@ class Agent():
 
 
 if __name__ == '__main__':
-    game = SecretaryGame(print_result=False, auto_play=True)
+    game = SecretaryGame(print_result=False, auto_play=True, exploring=True)
 
     # # Test get_stochastic_aciton function
     # number_of_iterations, hiring, skipping = game.agent.test_get_stochastic_aciton(1000, 0)
@@ -166,17 +173,14 @@ if __name__ == '__main__':
     # summary = game.agent.test_get_action(policy=policy, number_of_iteration=1000)
     # print(summary)
 
-    # game.play_game(number_of_iterations=10000)
-    # game.agent.update_policy()
-    # game.play_game(number_of_iterations=10000)
-    # game.agent.update_policy()
-    # game.play_game(number_of_iterations=10000)
-    # game.agent.update_policy()
+    for i in range(1000):
+        game.play_game(number_of_iterations=100)
+        game.agent.update_policy()
 
-    # Test optimal policy
-    policy = [[1, 1, 1, 1], [1, 0, 0, 0]]
-    game.agent.set_policy(policy)
-    game.play_game(number_of_iterations=10000)
+    # # Test optimal policy
+    # policy = [[1, 1, 1, 1], [1, 1, 1, 0]]
+    # game.agent.set_policy(policy)
+    # game.play_game(number_of_iterations=10000)
 
     print('Finish')
 
