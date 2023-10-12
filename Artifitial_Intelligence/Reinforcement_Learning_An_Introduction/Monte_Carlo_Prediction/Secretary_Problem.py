@@ -7,7 +7,7 @@ NUMBER_OF_CANDIDATES = 5
 SCALE = 15
 CENTER_MIN = 50
 CENTER_MAX = 100
-
+GAMMA = 0.2
 
 class SecretaryGame():
     def __init__(self, print_result=False, auto_play=False):
@@ -38,6 +38,7 @@ class SecretaryGame():
         for i in range(len(number_of_answer)):
             self.game_summary.add_row(['answer was {0}'.format(i), int(number_of_answer[i]), ''])
         print(self.game_summary)
+        print(self.agent.policy)
 
     def play_game(self, number_of_iterations):
         win_count = 0
@@ -67,9 +68,8 @@ class SecretaryGame():
                     if i == len(candidates) - 1:
                         action = 0
                     else:
-                        action = self.agent.get_action(choice_index=i, is_best=is_best)
-                if not i == len(candidates) - 1:
-                    trace.append([i, is_best, action])
+                        action = self.agent.get_action(policy=self.agent.policy, choice_index=i, is_best=is_best)
+                trace.append([i, is_best, action])
 
                 if action == 0 or i == len(candidates) - 1:
                     choice = i
@@ -93,42 +93,92 @@ class Agent():
         # Initializing policy -> 0.5, and action value function -> 0
         # We don't consider the last choice. At last we have to pick anyway
         self.policy = [[0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]]
-        self.action_value = [[[0, 0], [0, 0], [0, 0], [0, 0]], [[0, 0], [0, 0], [0, 0], [0, 0]]]
-        self.visited_count = [[0, 0, 0, 0], [0, 0, 0, 0]]
+        self.action_value = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
+        self.visited_count = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
 
     def update_action_value_function(self, trace, result):
         for choice_index, is_best, action in trace:
-            visited_count = self.visited_count[is_best][choice_index]
+            visited_count = self.visited_count[is_best][choice_index][action]
             prev_avg = self.action_value[is_best][choice_index][action]
             new_avg = ((visited_count * prev_avg) + result) / (visited_count + 1)
             self.action_value[is_best][choice_index][action] = new_avg
-            self.visited_count[is_best][choice_index] += 1
-            # self.update_policy()
+            self.visited_count[is_best][choice_index][action] += 1
 
     def update_policy(self):
         for j in range(2):
             for i in range(NUMBER_OF_CANDIDATES - 1):
                 # Hiring is stronger
-                if self.action_value[j][i][0] >= self.action_value[j][i][1]:
+                if self.action_value[j][i][0] > self.action_value[j][i][1]:
+                    # 0 is 100% of hiring.
                     self.policy[j][i] = 0
                 else:
                     # skipping is stronger
+                    # 1 is 100% of skipping
                     self.policy[j][i] = 1
 
-
-
-    def get_action(self, choice_index, is_best):
-        action = self.get_stochastic_aciton(self.policy[is_best][choice_index])
+    def get_action(self, policy, choice_index, is_best):
+        # Explore Exploit
+        result = random.choices(['Explore', 'Exploit'], [GAMMA, 1 - GAMMA])[0]
+        if result == 'Explore':
+            action = self.get_stochastic_aciton(0.5)
+        else:
+            action = self.get_stochastic_aciton(policy[is_best][choice_index])
         return action
+
+    def test_get_action(self, policy, number_of_iteration):
+        summary = np.array([[[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]], [[0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [0.0, 0.0]]])
+        for index in range(number_of_iteration):
+            for i in range(len(summary)):
+                for j in range(len(summary[i])):
+                    action = self.get_action(policy, choice_index=j, is_best=i)
+                    summary[i][j][action] += 1
+        return summary
 
     def get_stochastic_aciton(self, probability):
         # 0 hire 1 skip
-        action = random.choices([0, 1], [probability, 1 - probability])
+        action = random.choices([0, 1], [1 - probability, probability])
         return action[0]
+
+    def test_get_stochastic_aciton(self, number_of_iterations, probability):
+        hiring = 0
+        skipping = 0
+        for i in range(number_of_iterations):
+            result = self.get_stochastic_aciton(probability)
+            if result == 0:
+                hiring += 1
+            else:
+                skipping += 1
+        return number_of_iterations, hiring, skipping
+
+    def set_policy(self, policy):
+        self.policy = policy
+
 
 if __name__ == '__main__':
     game = SecretaryGame(print_result=False, auto_play=True)
+
+    # # Test get_stochastic_aciton function
+    # number_of_iterations, hiring, skipping = game.agent.test_get_stochastic_aciton(1000, 0)
+    # print(number_of_iterations, hiring, skipping)
+
+    # # Test get_action function
+    # policy = [[1, 1, 1, 1], [0, 0, 0, 0]]
+    # summary = game.agent.test_get_action(policy=policy, number_of_iteration=1000)
+    # print(summary)
+
+    # game.play_game(number_of_iterations=10000)
+    # game.agent.update_policy()
+    # game.play_game(number_of_iterations=10000)
+    # game.agent.update_policy()
+    # game.play_game(number_of_iterations=10000)
+    # game.agent.update_policy()
+
+    # Test optimal policy
+    policy = [[1, 1, 1, 1], [1, 0, 0, 0]]
+    game.agent.set_policy(policy)
     game.play_game(number_of_iterations=10000)
+
     print('Finish')
+
 
 
